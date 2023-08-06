@@ -2,14 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import math
-xrespb = 1/2
-maxeinflussB = 1
-maxeinflussA = 1/2
-negativeinfluss = 0.01
+xrespb = 1/2 # Relativer Einfluss auf Verantwortungsbewusstsein (A-B-Interaktion) und relativer Einfluss auf Problembewusstsein A-A-Interaktion 
+maxeinflussB = 1 # Maximaler Einfluss von B-Agent auf A-Agent, d.h. auf dessen Problembe-wusstsein.
+maxeinflussA = 1/2 # Maximaler Einfluss von A-Agent auf A-Agent, d.h. auf dessen Verantwor-tungsbewusstsein.
+negativeinfluss = 0.01 # Negativer Einfluss auf das Problembewusstsein bei keiner Interaktion
+bounded = 2.5 # eingeschränkter Vertrauensradius
 
-bounded = 2.5
-
-
+# A-Agent
 class Agent:
     def __init__(self, i, awareness, responsibility, bereitschaft, openness):
         self.awareness = awareness
@@ -45,9 +44,10 @@ class Agent:
             self.responsibility = max(0,min(self.responsibility,10))
             self.awareness = max(0,min(self.awareness,10))
 
-           
         self.bereitschaft = (self.awareness * self.responsibility)**0.5
         self.bereitschaft = max(0,min(self.bereitschaft,10))
+
+    # keine Interaktion
 
     def update_non_interaction(self):
          self.lastupdate = self.lastupdate + 1
@@ -57,25 +57,26 @@ class Agent:
             self.bereitschaft = (self.awareness * self.responsibility)**0.5
             self.bereitschaft = max(0,min(self.bereitschaft,10))
              
-
-
+# B-Agent
 class AgentB:
      def __init__(self, i):
             self.i = i
+# Netzwerk
 class Model_with_network:
     def __init__(self, n_agents, node_degree, rewiring_prob, notopen_Anzahl, anzahl_ABlink, n_agentsb, frequence, seed): 
         np.random.seed(seed)
-        # Assign Parameters 
         
-        self.n_agents = n_agents
-        self.node_degree = node_degree   
-        self.rewiring_prob = rewiring_prob
-        self.notopen_Anzahl = notopen_Anzahl
-        self.anzahl_ABlink = anzahl_ABlink
-        self.n_agentsb = n_agentsb
-        self.frequence = frequence
+        # Parameter zuweisen 
+        
+        self.n_agents = n_agents #Anzahl A-Agenten
+        self.node_degree = node_degree # durchschnittliche Anzahl der Links pro A-Agent
+        self.rewiring_prob = rewiring_prob # Umverdrahtungswahrscheinlichkeit
+        self.notopen_Anzahl = notopen_Anzahl # Anzahl "unbeeinflussbarer verweigernder" A-Agenten
+        self.anzahl_ABlink = anzahl_ABlink # Anzahl Links zwischen A- und B-Agenten
+        self.n_agentsb = n_agentsb # Anzahl B-Agenten
+        self.frequence = frequence # Interaktionswahrscheinlichkeit
 
-        # initialise agents
+        # Agenten initialisieren
         
         listAgents = []
         for i in range(self.n_agents):
@@ -93,15 +94,15 @@ class Model_with_network:
         self.network = nx.watts_strogatz_graph(self.n_agents, self.node_degree, self.rewiring_prob, seed)
         self.network.edges
         
-        
-        # die Agenten B haben erstmal keine Eigenschaften, sondern dienen nur als Sender
+        # die Agenten B haben keine Eigenschaften, sondern dienen nur als Sender
         
         self.agentsb = [AgentB (i = i + self.n_agents) for i in range(self.n_agentsb)]
         idsb = [ag.i for ag in self.agentsb]
         self.agentsbdict = dict (zip(idsb,self.agentsb))
-        #self.networkb = nx.watts_strogatz_graph(self.n_agentsb, self.node_degree, self.rewiring_prob)
+      
         
-        # Graph für Agent und Agent B 
+        # Graph für A-Agenten und B-Agenten
+        
         self.g = nx.Graph()
         self.g.add_nodes_from(range(0, len(self.agents) + len(self.agentsb)))   
         for i in range (self.anzahl_ABlink) :
@@ -115,19 +116,20 @@ class Model_with_network:
             
     def update_step(self):
         ids = [ag.i for ag in self.agents]
-        np.random.shuffle(ids)  # shuffles the entries in the id-list (in-place)
-        # loop through all the agents (in random order) and let them (potentially) update their opinions.
+        np.random.shuffle(ids)  # mischt die Einträge in der id-Liste (in-place)
+        # Schleife durch alle Agenten (in zufälliger Reihenfolge) und (möglicherweise) aktualisieren sie ihre Meinungen.
         for i in ids:
-            # select interaction partners:
-            ag = self.agents[i]  # listener
+            # Interaktionspartner auswählen:
+            ag = self.agents[i]  # Empfänger
             if np.random.random() <= self.frequence:
                 potentialnachbar = list(self.g.neighbors(ag.i))
                 if not potentialnachbar == []: 
                     idsspeaker = np.random.choice(potentialnachbar)
-                    speaker = self.agentsalldict[idsspeaker]    # speaker randomly selected NEIGHBOUR 
+                    speaker = self.agentsalldict[idsspeaker]    # Sprecher zufällig ausgewählter NACHBAR 
 
                     ag.update(other= speaker)
             else:
                 ag.update_non_interaction()
-
+                
+# Basismodell
 m = Model_with_network (n_agents= 100, node_degree = 6, rewiring_prob = 0.1, notopen_Anzahl = 10, anzahl_ABlink = 20, n_agentsb = 50, frequence = 0.5, seed = 6)
