@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import math
 
-#Import von einigen Parametern für das Modell
+# Import von einigen Parametern für das Modell
 xrespb = 1/2 # Relativer Einfluss auf Verantwortungsbewusstsein (A-B-Interaktion) und relativer Einfluss auf Problembewusstsein (A-A-Interaktion) 
 maxeinflussB = 1 # Maximaler Einfluss von B-Agent auf A-Agent, d.h. auf dessen Problembe-wusstsein.
 maxeinflussA = 1/2 # Maximaler Einfluss von A-Agent auf A-Agent, d.h. auf dessen Verantwor-tungsbewusstsein.
@@ -23,12 +23,11 @@ class Agent:
     
         
    # Aktualisierung des Verantwortungs- und Problembewusstseins, wenn A-Agent auf A- oder B-Agenten trifft
-
     def update(self, other):
         self.lastupdate = 0
         op = (self.openness)/10
 
-        # A-Agent trifft auf B-Agent
+        # A-Agent trifft auf B-Agenten
         if isinstance(other, AgentB) == True:
             self.awareness = self.awareness + op * maxeinflussB 
             self.awareness = max(0,min(self.awareness,10))
@@ -50,7 +49,6 @@ class Agent:
         self.bereitschaft = max(0,min(self.bereitschaft,10))
 
     # Aktualisierung des Problembewusstsein, wenn A-Agent nicht interagiert
-
     def update_non_interaction(self):
          self.lastupdate = self.lastupdate + 1
          if self.lastupdate > 4:
@@ -63,6 +61,7 @@ class Agent:
 class AgentB:
      def __init__(self, i):
             self.i = i
+         
 # Definition der Klasse für das Modell mit Netzwerk
 class Model_with_network:
     def __init__(self, n_agents, node_degree, rewiring_prob, notopen_Anzahl, anzahl_ABlink, n_agentsb, frequence, seed): 
@@ -113,7 +112,7 @@ class Model_with_network:
         self.agentsalldict = self.agentsdict.copy()
         self.agentsalldict.update(self.agentsbdict)  
         
-   # Aktualisierung eines  Zeitschrittes       
+   # Aktualisierung (ein Zeitschritt)     
     def update_step(self):
         ids = [ag.i for ag in self.agents]
         np.random.shuffle(ids)  # mischt die Einträge in der id-Liste (in-place)
